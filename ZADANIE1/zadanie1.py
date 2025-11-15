@@ -1,59 +1,63 @@
-def dodaj_element(wejscie):
+def dodaj_element(structure):
+    # 1. Znajdź maksymalny poziom zagnieżdżenia list
+    depths = []
 
-    # Tu szukamy maksymalnej głębokości LIST, nie całej struktury
-    def znajdz_maks_list(x, poziom=0):
-        max_g = -1  # -1 oznacza: jeszcze nie znaleziono żadnej listy na tym poziomie
+    def find_depths(obj, depth):
+        if isinstance(obj, list):
+            depths.append(depth)
+            for el in obj:
+                if isinstance(el, (list, tuple, dict)):
+                    find_depths(el, depth + 1)
+        elif isinstance(obj, tuple):
+            for el in obj:
+                if isinstance(el, (list, tuple, dict)):
+                    find_depths(el, depth + 1)
+        elif isinstance(obj, dict):
+            for val in obj.values():
+                if isinstance(val, (list, tuple, dict)):
+                    find_depths(val, depth + 1)
 
-        if isinstance(x, list):
-            # znaleźliśmy listę – aktualny poziom jest ważny
-            max_g = poziom
-            for el in x:
-                max_g = max(max_g, znajdz_maks_list(el, poziom + 1))
+    find_depths(structure, 0)
 
-        elif isinstance(x, tuple):
-            # tuple tylko przenosi zagłębienie dalej
-            for el in x:
-                max_g = max(max_g, znajdz_maks_list(el, poziom + 1))
+    if not depths:
+        return structure
 
-        elif isinstance(x, dict):
-            # wartości słownika też są zagłębione
-            for v in x.values():
-                max_g = max(max_g, znajdz_maks_list(v, poziom + 1))
+    max_depth = max(depths)
 
-        return max_g
+    # 2. Rekurencyjnie dodawaj elementy tylko do list o maksymalnym poziomie
+    def process(obj, depth):
+        if isinstance(obj, list):
+            new_list = []
+            for el in obj:
+                if isinstance(el, (list, tuple, dict)):
+                    new_list.append(process(el, depth + 1))
+                else:
+                    new_list.append(el)
 
-    maks = znajdz_maks_list(wejscie)
+            # jeśli to jest lista na maksymalnym poziomie — dodaj nowy element
+            if depth == max_depth:
+                new_list.append(len(new_list) + 1)
 
-    # specjalny przypadek: nie znaleziono ŻADNYCH list zagnieżdżonych
-    if maks == -1:
-        wejscie.append(len(wejscie) + 1)
-        return wejscie
+            return new_list
 
-    # Dodajemy element do list na poziomie maksymalnym
-    def dodaj(x, poziom=0):
-        if isinstance(x, list):
-            if poziom == maks:
-                x.append(len(x) + 1)
-            else:
-                for el in x:
-                    dodaj(el, poziom + 1)
+        elif isinstance(obj, tuple):
+            new_tuple = []
+            for el in obj:
+                if isinstance(el, (list, tuple, dict)):
+                    new_tuple.append(process(el, depth + 1))
+                else:
+                    new_tuple.append(el)
+            return tuple(new_tuple)
 
-        elif isinstance(x, tuple):
-            for el in x:
-                dodaj(el, poziom + 1)
+        elif isinstance(obj, dict):
+            new_dict = {}
+            for k, v in obj.items():
+                if isinstance(v, (list, tuple, dict)):
+                    new_dict[k] = process(v, depth + 1)
+                else:
+                    new_dict[k] = v
+            return new_dict
 
-        elif isinstance(x, dict):
-            for v in x.values():
-                dodaj(v, poziom + 1)
+        return obj
 
-    dodaj(wejscie)
-    return wejscie
-
-
-if __name__ == '__main__':
-    input_list = [
-     1, 2, [3, 4, [5, {"klucz": [5, 6], "tekst": [1, 2]}], 5],
-     "hello", 3, [4, 5], 5, (6, (1, [7, 8]))
-    ]
-    output_list = dodaj_element(input_list)
-    print(input_list)
+    return process(structure, 0)
