@@ -1,63 +1,71 @@
-def dodaj_element(structure):
-    # 1. Znajdź maksymalny poziom zagnieżdżenia list
-    depths = []
-
-    def find_depths(obj, depth):
-        if isinstance(obj, list):
-            depths.append(depth)
-            for el in obj:
-                if isinstance(el, (list, tuple, dict)):
-                    find_depths(el, depth + 1)
-        elif isinstance(obj, tuple):
-            for el in obj:
-                if isinstance(el, (list, tuple, dict)):
-                    find_depths(el, depth + 1)
-        elif isinstance(obj, dict):
-            for val in obj.values():
-                if isinstance(val, (list, tuple, dict)):
-                    find_depths(val, depth + 1)
-
-    find_depths(structure, 0)
-
-    if not depths:
-        return structure
-
-    max_depth = max(depths)
-
-    # 2. Rekurencyjnie dodawaj elementy tylko do list o maksymalnym poziomie
-    def process(obj, depth):
-        if isinstance(obj, list):
-            new_list = []
-            for el in obj:
-                if isinstance(el, (list, tuple, dict)):
-                    new_list.append(process(el, depth + 1))
-                else:
-                    new_list.append(el)
-
-            # jeśli to jest lista na maksymalnym poziomie — dodaj nowy element
+def dodaj_element(wejscie):
+    max_depth = 0
+    deepest_items = []
+    
+    def find_deepest(items, depth=0):
+        nonlocal max_depth, deepest_items
+        
+        if isinstance(items, list):
+            if depth > max_depth:
+                max_depth = depth
+                deepest_items = [items]
+            elif depth == max_depth:
+                deepest_items.append(items)
+            
+            for item in items:
+                find_deepest(item, depth + 1)
+                
+        elif isinstance(items, tuple):
+            for item in items:
+                find_deepest(item, depth + 1)
+                
+        elif isinstance(items, dict):
+            for value in items.values():
+                find_deepest(value, depth + 1)
+    
+    def add_to_deepest(items, depth=0):
+        nonlocal max_depth
+        
+        if isinstance(items, list):
             if depth == max_depth:
-                new_list.append(len(new_list) + 1)
+                if items not in added_items:
+                    items.append(next_value)
+                    added_items.add(id(items))
+                return
+            
+            for item in items:
+                add_to_deepest(item, depth + 1)
+                
+        elif isinstance(items, tuple):
+            for item in items:
+                add_to_deepest(item, depth + 1)
+                
+        elif isinstance(items, dict):
+            for value in items.values():
+                add_to_deepest(value, depth + 1)
+    
+    # Znajdź najgłębsze zagnieżdżenie
+    find_deepest(wejscie)
+    
+    # Jeśli nie ma żadnych list, dodaj na końcu głównej listy
+    if max_depth == 0:
+        if isinstance(wejscie, list):
+            return wejscie + [1]
+        return wejscie
+    
+    # Oblicz następną wartość do dodania
+    next_value = max_depth + 1
+    
+    # Dodaj element do najgłębszych list
+    added_items = set()
+    add_to_deepest(wejscie)
+    
+    return wejscie
 
-            return new_list
-
-        elif isinstance(obj, tuple):
-            new_tuple = []
-            for el in obj:
-                if isinstance(el, (list, tuple, dict)):
-                    new_tuple.append(process(el, depth + 1))
-                else:
-                    new_tuple.append(el)
-            return tuple(new_tuple)
-
-        elif isinstance(obj, dict):
-            new_dict = {}
-            for k, v in obj.items():
-                if isinstance(v, (list, tuple, dict)):
-                    new_dict[k] = process(v, depth + 1)
-                else:
-                    new_dict[k] = v
-            return new_dict
-
-        return obj
-
-    return process(structure, 0)
+if __name__ == '__main__':
+    input_list = [
+        1, 2, [3, 4, [5, {"klucz": [5, 6], "tekst": [1, 2]}], 5],
+        "hello", 3, [4, 5], 5, (6, (1, [7, 8]))
+    ]
+    output_list = dodaj_element(input_list)
+    print(output_list)
