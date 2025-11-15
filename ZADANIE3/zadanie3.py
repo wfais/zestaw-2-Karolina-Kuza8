@@ -1,86 +1,50 @@
-import requests, re, time, sys
-from collections import Counter
+import pytest
+from ZADANIE3.zadanie3 import rzymskie_na_arabskie, arabskie_na_rzymskie
 
-URL = "https://pl.wikipedia.org/api/rest_v1/page/random/summary"
-N = 100  # liczba losowań
-HEADERS = {
-    "User-Agent": "wp-edu-wiki-stats/0.1 (kontakt: twoj-email@domena)",
-    "Accept": "application/json",
-}
+def test_konwersja_minimalna_rzymska():
+    assert rzymskie_na_arabskie("I") == 1
 
-# przygotowanie wyrażenia regularnego wyłapującego słowa (litery)
-WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+def test_konwersja_maksymalna_rzymska():
+    assert rzymskie_na_arabskie("MMMCMXCIX") == 3999
 
+def test_konwersja_minimalna_arabska():
+    assert arabskie_na_rzymskie(1) == "I"
 
-def selekcja(text: str):
-    # Zwróć listę słów wydobytych z 'text', spełniających warunki zadania:
-    #  - słowa zapisane małymi literami
-    #  - długość każdego słowa > 3 znaki
-    #
-    # Wskazówka:
-    #  użyj WORD_RE.findall(text), następnie przefiltruj wynik
-    #
-    # Przykład:
-    #  selekcja("Ala ma 3 koty i 2 psy oraz żółw")
-    #     -> ["koty", "oraz", "żółw"]
-    pass
+def test_konwersja_maksymalna_arabska():
+    assert arabskie_na_rzymskie(3999) == "MMMCMXCIX"
 
+def test_liczba_rzymska_z_odejmowaniem():
+    assert rzymskie_na_arabskie("IV") == 4
+    assert rzymskie_na_arabskie("IX") == 9
+    assert rzymskie_na_arabskie("XL") == 40
+    assert rzymskie_na_arabskie("XC") == 90
+    assert rzymskie_na_arabskie("CD") == 400
+    assert rzymskie_na_arabskie("CM") == 900
 
-def ramka(text: str, width: int = 80) -> str:
-    # Zwróć napis w ramce o stałej szerokości, w postaci:
-    #   [        treść wyśrodkowana w polu o szerokości width-2       ]
-    #
-    # Jeśli text jest za długi (ma więcej znaków niż width-2),
-    # obetnij go do width-3 i dodaj na końcu znak '…' (U+2026).
-    #
-    # Następnie wyśrodkuj (użyj str.center(...)) i doklej nawiasy
-    # kwadratowe po bokach. Zwróć wynik w postaci f"[{...}]".
-    #
-    # Przykład:
-    #   ramka("Kot", width=10)  ->  "[  Kot   ]"   (łącznie 10 znaków)
-    pass
+def test_liczba_rzymska_bez_odejmowania():
+    assert rzymskie_na_arabskie("III") == 3
+    assert rzymskie_na_arabskie("VIII") == 8
+    assert rzymskie_na_arabskie("LXXX") == 80
+    assert rzymskie_na_arabskie("DCCC") == 800
 
+def test_konwersja_niemożliwa_rzymska():
+    with pytest.raises(ValueError):
+        rzymskie_na_arabskie("IIII")  # Powinno być IV
+    with pytest.raises(ValueError):
+        rzymskie_na_arabskie("VV")    # Powinno być X
 
-def main():
-    cnt = Counter()
-    licznik_slow = 0
-    pobrane = 0
+def test_konwersja_nieprawidłowe_symbole():
+    with pytest.raises(ValueError):
+        rzymskie_na_arabskie("IC")    # Niepoprawna liczba
+    with pytest.raises(ValueError):
+        rzymskie_na_arabskie("ABCD")  # Niepoprawny znak
 
-    # linia statusu
-    print(ramka("Start"), end="", flush=True)
+def test_arabska_poza_zakresem():
+    with pytest.raises(ValueError):
+        arabskie_na_rzymskie(0)       # Poza zakresem
+    with pytest.raises(ValueError):
+        arabskie_na_rzymskie(4000)    # Poza zakresem
 
-    while pobrane < N:
-        try:
-            data = requests.get(URL, headers=HEADERS, timeout=10).json()
-        except Exception:
-            # timeout / brak JSON → spróbuj ponownie
-            time.sleep(0.1)
-            continue
-
-        # Pobierz tytuł hasła z 'data' (klucz "title"; jeśli brak, użyj pustego łańcucha)
-        # Następnie drukuj ramkę z tym tytułem:
-        #  - zbuduj łańcuch: "\r" + ramka(tytul, 80)
-        #  - wydrukuj print(..., end="", flush=True), by nadpisywać bieżącą linię w konsoli
-        #
-        # Przykład:
-        #   title = data.get("title") or ""
-        #   line = "\r" + ramka(title, 80)
-        #   print(line, end="", flush=True)
-
-        # Pobierz 'extract' (klucz "extract"; jeśli brak, użyj ""), przepuść przez selekcja()
-        #  - wynikowa lista słów (>=4) powinna zostać doliczona do licznika:
-        #       cnt.update(lista_slow)
-        #  - dolicz też do licznik_slow długość tej listy
-        #  - zwiększ licznik 'pobrane' (udało się przetworzyć jedną próbkę)
-        #  - opcjonalnie mała przerwa: time.sleep(0.05)
-
-
-    print(f"Pobrano: {pobrane}")
-    print(f"#Słowa:  {licznik_slow}")
-    print(f"Unikalne:  {len(cnt)}\n")
-
-    print("Najczęstsze 15 słów:")
-    # tu wypisz w pętli, korzystając np. z most_common(15)
-
-if __name__ == "__main__":
-    main()
+def test_idempotentnosc_konwersji():
+    for liczba in [1, 4, 9, 58, 1994, 3999]:
+        assert rzymskie_na_arabskie(arabskie_na_rzymskie(liczba)) == liczba
