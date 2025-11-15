@@ -1,56 +1,50 @@
 def dodaj_element(structure):
+    """
+    Funkcja znajduje wszystkie najgłębsze listy i dodaje do nich element:
+    - 1 + max(lista)
+    - lub 1 jeśli lista jest pusta
+    """
 
-    def process(node):
-        
-        # Jeśli lista:
-        if isinstance(node, list):
-            max_depth = 1
-            contains_list = False
-            new_list = []
-            
-            for el in node:
-                new_el, depth, has_list = process(el)
-                if depth + 1 > max_depth:
-                    max_depth = depth + 1
-                if has_list:
-                    contains_list = True
-                new_list.append(new_el)
-            
-            # Jeśli wewnątrz NIE ma list — to jest najgłębsza lista
-            if not contains_list:
-                new_list.append(len(new_list) + 1)
+    # Najpierw ustalamy maksymalną głębokość dowolnej listy
 
-            return new_list, max_depth, True
-        
-        # Jeśli słownik:
-        if isinstance(node, dict):
-            max_depth = 0
-            contains_list = False
-            out = {}
-            for k, v in node.items():
-                new_v, depth, has_list = process(v)
-                out[k] = new_v
-                if depth > max_depth:
-                    max_depth = depth
-                if has_list:
-                    contains_list = True
-            return out, max_depth, contains_list
-        
-        # Jeśli tuple:
-        if isinstance(node, tuple):
-            max_depth = 0
-            contains_list = False
-            new_items = []
-            for el in node:
-                new_el, depth, has_list = process(el)
-                new_items.append(new_el)
-                if depth > max_depth:
-                    max_depth = depth
-                if has_list:
-                    contains_list = True
-            return tuple(new_items), max_depth, contains_list
-        
-        # Inne typy
-        return node, 0, False
+    def find_max_depth(x, depth=0):
+        max_d = depth
+        if isinstance(x, list):
+            for el in x:
+                max_d = max(max_d, find_max_depth(el, depth + 1))
+        elif isinstance(x, dict):
+            for el in x.values():
+                max_d = max(max_d, find_max_depth(el, depth + 1))
+        elif isinstance(x, tuple):
+            for el in x:
+                max_d = max(max_d, find_max_depth(el, depth + 1))
+        return max_d
 
-    return process(structure)[0]
+    max_depth = find_max_depth(structure)
+
+    # Teraz modyfikujemy TYLKO listy na max_depth
+
+    def process(x, depth=0):
+        if isinstance(x, list):
+            new = []
+            for el in x:
+                new.append(process(el, depth + 1))
+
+            # jeśli ta lista jest NAJGŁĘBSZA
+            if depth == max_depth:
+                if new:  # niepusta
+                    new.append(max(new) + 1)
+                else:    # pusta
+                    new.append(1)
+
+            return new
+
+        elif isinstance(x, dict):
+            return {k: process(v, depth + 1) for k, v in x.items()}
+
+        elif isinstance(x, tuple):
+            return tuple(process(el, depth + 1) for el in x)
+
+        return x  # typ prosty
+
+    return process(structure)
