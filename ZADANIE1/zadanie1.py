@@ -1,48 +1,56 @@
-def dodaj_element(wejscie):
+def dodaj_element(structure):
 
-    # znajdowanie maksymalnej głębokości zagnieżdżeń LIST
-    def max_glebokosc(x, poziom=1):
-        max_g = poziom
-        if isinstance(x, list):
-            for e in x:
-                g = max_glebokosc(e, poziom + 1)
-                if g > max_g:
-                    max_g = g
-        elif isinstance(x, tuple):
-            for e in x:
-                g = max_glebokosc(e, poziom + 1)
-                if g > max_g:
-                    max_g = g
-        elif isinstance(x, dict):
-            for v in x.values():
-                g = max_glebokosc(v, poziom + 1)
-                if g > max_g:
-                    max_g = g
-        return max_g
+    def process(node):
+        
+        # Jeśli lista:
+        if isinstance(node, list):
+            max_depth = 1
+            contains_list = False
+            new_list = []
+            
+            for el in node:
+                new_el, depth, has_list = process(el)
+                if depth + 1 > max_depth:
+                    max_depth = depth + 1
+                if has_list:
+                    contains_list = True
+                new_list.append(new_el)
+            
+            # Jeśli wewnątrz NIE ma list — to jest najgłębsza lista
+            if not contains_list:
+                new_list.append(len(new_list) + 1)
 
-    maks = max_glebokosc(wejscie)
+            return new_list, max_depth, True
+        
+        # Jeśli słownik:
+        if isinstance(node, dict):
+            max_depth = 0
+            contains_list = False
+            out = {}
+            for k, v in node.items():
+                new_v, depth, has_list = process(v)
+                out[k] = new_v
+                if depth > max_depth:
+                    max_depth = depth
+                if has_list:
+                    contains_list = True
+            return out, max_depth, contains_list
+        
+        # Jeśli tuple:
+        if isinstance(node, tuple):
+            max_depth = 0
+            contains_list = False
+            new_items = []
+            for el in node:
+                new_el, depth, has_list = process(el)
+                new_items.append(new_el)
+                if depth > max_depth:
+                    max_depth = depth
+                if has_list:
+                    contains_list = True
+            return tuple(new_items), max_depth, contains_list
+        
+        # Inne typy
+        return node, 0, False
 
-    # dodawanie elementu do list na maksymalnej głębokości
-    def dodaj(x, poziom=1):
-        if isinstance(x, list):
-            if poziom == maks:
-                x.append(len(x) + 1)
-            else:
-                for i in range(len(x)):
-                    x[i] = dodaj(x[i], poziom + 1)
-            return x
-
-        elif isinstance(x, tuple):
-            nowa = []
-            for e in x:
-                nowa.append(dodaj(e, poziom + 1))
-            return tuple(nowa)
-
-        elif isinstance(x, dict):
-            for k in x:
-                x[k] = dodaj(x[k], poziom + 1)
-            return x
-
-        return x
-
-    return dodaj(wejscie)
+    return process(structure)[0]
