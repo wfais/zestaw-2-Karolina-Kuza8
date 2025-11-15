@@ -1,50 +1,46 @@
-def dodaj_element(structure):
-    """
-    Funkcja znajduje wszystkie najgłębsze listy i dodaje do nich element:
-    - 1 + max(lista)
-    - lub 1 jeśli lista jest pusta
-    """
-
-    # Najpierw ustalamy maksymalną głębokość dowolnej listy
-
-    def find_max_depth(x, depth=0):
-        max_d = depth
+def dodaj_element(wejscie):
+   
+    def znajdz_maks_glebokosc(x, poziom=0):
+        max_g = poziom
         if isinstance(x, list):
             for el in x:
-                max_d = max(max_d, find_max_depth(el, depth + 1))
-        elif isinstance(x, dict):
-            for el in x.values():
-                max_d = max(max_d, find_max_depth(el, depth + 1))
+                max_g = max(max_g, znajdz_maks_glebokosc(el, poziom + 1))
         elif isinstance(x, tuple):
             for el in x:
-                max_d = max(max_d, find_max_depth(el, depth + 1))
-        return max_d
+                max_g = max(max_g, znajdz_maks_glebokosc(el, poziom + 1))
+        elif isinstance(x, dict):
+            for v in x.values():
+                # wartości słownika traktujemy jak dodatkowe zagnieżdżenie
+                max_g = max(max_g, znajdz_maks_glebokosc(v, poziom + 1))
+        return max_g
 
-    max_depth = find_max_depth(structure)
+    maks = znajdz_maks_glebokosc(wejscie)
 
-    # Teraz modyfikujemy TYLKO listy na max_depth
-
-    def process(x, depth=0):
+    # Teraz dodam elementy do wszystkich list na tym poziomie
+    def dodaj_w_maks(x, poziom=0):
         if isinstance(x, list):
-            new = []
-            for el in x:
-                new.append(process(el, depth + 1))
-
-            # jeśli ta lista jest NAJGŁĘBSZA
-            if depth == max_depth:
-                if new:  # niepusta
-                    new.append(max(new) + 1)
-                else:    # pusta
-                    new.append(1)
-
-            return new
-
-        elif isinstance(x, dict):
-            return {k: process(v, depth + 1) for k, v in x.items()}
+            if poziom == maks:
+                x.append(len(x) + 1)
+            else:
+                for el in x:
+                    dodaj_w_maks(el, poziom + 1)
 
         elif isinstance(x, tuple):
-            return tuple(process(el, depth + 1) for el in x)
+            for el in x:
+                dodaj_w_maks(el, poziom + 1)
 
-        return x  # typ prosty
+        elif isinstance(x, dict):
+            for v in x.values():
+                dodaj_w_maks(v, poziom + 1)
 
-    return process(structure)
+    dodaj_w_maks(wejscie)
+    return wejscie
+
+
+if __name__ == '__main__':
+    input_list = [
+        1, 2, [3, 4, [5, {"klucz": [5, 6], "tekst": [1, 2]}], 5],
+        "hello", 3, [4, 5], 5, (6, (1, [7, 8]))
+    ]
+    output_list = dodaj_element(input_list)
+    print(input_list)
