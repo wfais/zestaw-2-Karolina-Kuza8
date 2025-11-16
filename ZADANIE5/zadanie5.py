@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from sympy import symbols, sympify, lambdify
 
 
-# Funkcja rysująca wykres na podstawie eval()
 def rysuj_wielomian(wejscie):
     # wejscie ma format: "funkcja, xmin xmax"
     # przykład: "x**2 + 3*x + 1, -10 10"
@@ -13,7 +12,6 @@ def rysuj_wielomian(wejscie):
     xmin = float(xmin)
     xmax = float(xmax)
 
-    # generowanie X
     x_val = np.linspace(xmin, xmax, 200)
 
     # obliczanie Y przez eval
@@ -30,7 +28,6 @@ def rysuj_wielomian(wejscie):
     return y_val[0], y_val[-1]
 
 
-# Funkcja rysująca wykres za pomocą SymPy
 def rysuj_wielomian(wejscie):
     czesci = wejscie.split(",")
     wzor = czesci[0].strip()
