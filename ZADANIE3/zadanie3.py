@@ -8,22 +8,34 @@ HEADERS = {
     "Accept": "application/json",
 }
 
-# wyrażenie regularne wyłapujące słowa (tylko litery, Unicode)
 WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
 
 
 def selekcja(text: str):
-    """Zwróć listę słów dłuższych niż 3 znaki, złożonych wyłącznie z liter, małe litery"""
-    return [w.lower() for w in WORD_RE.findall(text) if len(w) > 3]
+    # znajdź wszystkie słowa (same litery)
+    slowa = WORD_RE.findall(text)
+    wynik = []
+    for s in slowa:
+        s2 = s.lower()
+        if len(s2) > 3:
+            wynik.append(s2)
+    return wynik
 
 
 def ramka(text: str, width: int = 80) -> str:
-    """Zwraca tekst w ramce o stałej szerokości z wyśrodkowaniem, przycinaniem i wielokropkiem"""
+    # miejsce na treść = width-2 (bo dwa nawiasy)
     content_w = width - 2
-    t = text.strip()
+    t = text
+
+    # jeśli za długie, skróć i dodaj …
     if len(t) > content_w:
-        t = t[:content_w - 1] + "…"
-    return f"[{t.center(content_w)}]"
+        # zostaw miejsce na znak … → content_w - 1
+        t = t[: content_w - 1] + "…"
+
+    # wyśrodkuj
+    centered = t.center(content_w)
+    # dołóż nawiasy
+    return f"[{centered}]"
 
 
 def main():
@@ -31,7 +43,6 @@ def main():
     licznik_slow = 0
     pobrane = 0
 
-    # linia statusu start
     print(ramka("Start"), end="", flush=True)
 
     while pobrane < N:
@@ -46,20 +57,22 @@ def main():
         print(line, end="", flush=True)
 
         extract = data.get("extract") or ""
-        words = selekcja(extract)
-        cnt.update(words)
-        licznik_slow += len(words)
+        lista = selekcja(extract)
+
+        cnt.update(lista)
+        licznik_slow += len(lista)
         pobrane += 1
+
         time.sleep(0.05)
 
-    print()  # zakończ linię statusu
-    print(f"Pobrano: {pobrane}")
-    print(f"#Słowa:  {licznik_slow}")
-    print(f"Unikalne:  {len(cnt)}\n")
+    print()  # nowa linia po ramce
+    print(f"Pobrano wpisów: {pobrane}")
+    print(f"Słów (≥4) łącznie: {licznik_slow}")
+    print(f"Unikalnych (≥4): {len(cnt)}\n")
 
-    print("Najczęstsze 15 słów:")
-    for w, ile in cnt.most_common(15):
-        print(f"{w}: {ile}")
+    print("Top 15 słów (≥4):")
+    for slowo, ile in cnt.most_common(15):
+        print(f"{slowo}: {ile}")
 
 
 if __name__ == "__main__":
