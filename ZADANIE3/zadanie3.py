@@ -8,14 +8,15 @@ HEADERS = {
     "Accept": "application/json",
 }
 
+# przygotowanie wyrażenia regularnego wyłapującego słowa (litery)
 WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
 
 
 def selekcja(text: str):
-    # znajdź wszystkie słowa (same litery)
-    slowa = WORD_RE.findall(text)
+    # wyciągamy słowa z tekstu
+    słowa = WORD_RE.findall(text)
     wynik = []
-    for s in slowa:
+    for s in słowa:
         s2 = s.lower()
         if len(s2) > 3:
             wynik.append(s2)
@@ -23,19 +24,18 @@ def selekcja(text: str):
 
 
 def ramka(text: str, width: int = 80) -> str:
-    # miejsce na treść = width-2 (bo dwa nawiasy)
+    # szerokość pola wewnętrznego
     content_w = width - 2
-    t = text
 
-    # jeśli za długie, skróć i dodaj …
-    if len(t) > content_w:
-        # zostaw miejsce na znak … → content_w - 1
-        t = t[: content_w - 1] + "…"
+    # za długie → przyciąć i dodać …
+    if len(text) > content_w:
+        # zostawiamy content_w - 1 znak (bo jeden to "…")
+        text = text[: content_w - 1] + "…"
 
-    # wyśrodkuj
-    centered = t.center(content_w)
-    # dołóż nawiasy
-    return f"[{centered}]"
+    # wyśrodkowanie
+    centered = text.center(content_w)
+
+    return "[" + centered + "]"
 
 
 def main():
@@ -43,6 +43,7 @@ def main():
     licznik_slow = 0
     pobrane = 0
 
+    # linia statusu
     print(ramka("Start"), end="", flush=True)
 
     while pobrane < N:
@@ -71,8 +72,8 @@ def main():
     print(f"Unikalnych (≥4): {len(cnt)}\n")
 
     print("Top 15 słów (≥4):")
-    for slowo, ile in cnt.most_common(15):
-        print(f"{slowo}: {ile}")
+    for słowo, ile in cnt.most_common(15):
+        print(f"{słowo}: {ile}")
 
 
 if __name__ == "__main__":
