@@ -21,7 +21,6 @@ def rysuj_wielomian(wejscie):
     x = x_val
     y_val = eval(wzor)
 
-    # rysowanie wykresu
     plt.plot(x_val, y_val)
     plt.xlabel("x")
     plt.ylabel("f(x)")
@@ -32,38 +31,30 @@ def rysuj_wielomian(wejscie):
 
 
 # Funkcja rysująca wykres za pomocą SymPy
-def rysuj_wielomian_sympy(wejscie):
-    # dzielenie danych wejściowych
+def rysuj_wielomian(wejscie):
     czesci = wejscie.split(",")
-    wzor_txt = czesci[0].strip()
+    wzor = czesci[0].strip()
     xmin, xmax = czesci[1].split()
     xmin = float(xmin)
     xmax = float(xmax)
 
-    # symbol
-    x = symbols('x')
-
-    # konwersja tekstu na funkcję SymPy
-    wyrazenie = sympify(wzor_txt)
-
-    # lambdify — tworzy funkcję numeryczną
-    funkcja = lambdify(x, wyrazenie, 'numpy')
-
-    # generowanie danych
     x_val = np.linspace(xmin, xmax, 200)
-    y_val_sympy = funkcja(x_val)
 
-    # rysowanie wykresu
-    plt.plot(x_val, y_val_sympy)
+    # przygotowanie x do eval
+    x = x_val
+    y_val = eval(wzor)
+
+    if isinstance(y_val, (int, float)):
+        y_val = np.full_like(x_val, float(y_val))
+
+    plt.plot(x_val, y_val)
     plt.xlabel("x")
     plt.ylabel("f(x)")
-    plt.title("Wykres wielomianu (SymPy)")
+    plt.title("Wykres wielomianu (eval)")
     plt.grid(True)
 
-    return y_val_sympy[0], y_val_sympy[-1]
+    return y_val[0], y_val[-1]
 
-
-# Kod wykonywany tylko gdy uruchamiamy plik samodzielnie
 if __name__ == '__main__':
 
     wejscie1 = "x**3 + 3*x + 1, -10 10"
